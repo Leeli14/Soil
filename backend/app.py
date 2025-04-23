@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import joblib
 import pandas as pd
 from utils.advice_generator import get_advice
 
 app = Flask(__name__)
+CORS(app)
 
 # Load models and label encoders
 models = {
@@ -43,5 +45,5 @@ def predict():
         "fertilization": advice["fertilization"]
     })
         
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)

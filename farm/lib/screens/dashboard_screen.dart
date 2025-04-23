@@ -1,6 +1,7 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/api_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String selectedCrop;
@@ -14,13 +15,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic>? prediction;
   bool isLoading = false;
 
+  final apiServices = ApiServices(); // Assuming you have an ApiServices class
+
   void getPredictionFromBackend(Map<String, dynamic> sensorData) async {
     setState(() => isLoading = true);
     try {
-      final result = await ApiService.getPrediction(
-        widget.selectedCrop,
-        sensorData,
-      );
+      final result = await apiServices.getPrediction("tomato", sensorData);
       setState(() => prediction = result);
     } catch (e) {
       ScaffoldMessenger.of(
@@ -142,4 +142,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
- QQ
+
+class ApiServices {
+  Future<Map<String, dynamic>> getPrediction(
+    String crop,
+    Map<String, dynamic> sensorData,
+  ) async {
+    // Simulate a network call
+    await Future.delayed(const Duration(seconds: 2));
+    return {
+      'predicted_disease': 'Powdery Mildew',
+      'solution': 'Apply fungicide',
+      'irrigation': 'Water every 3 days',
+      'fertilization': 'Use NPK fertilizer',
+    };
+  }
+}

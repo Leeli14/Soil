@@ -7,7 +7,7 @@ class ApiService {
     Map<String, dynamic> sensorData,
   ) async {
     const url =
-        "http://<YOUR_LOCAL_IP>:5000/predict"; // Replace with your Flask server IP
+        "https://zany-doodle-g46wvxjq59w9cv655-5000.app.github.dev/predict"; // Replace with your backend URL
 
     final response = await http.post(
       Uri.parse(url),
@@ -22,4 +22,3 @@ class ApiService {
     }
   }
 }
-q

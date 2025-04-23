@@ -30,11 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: ^2.25.0
-  qcloud_firestore:
-    git:
-      url: git@github.com:Leeli14/soil.git
-      ref: main
+  firebase_core: ^2.18.0
+  cloud_firestore: ^4.11.0
+  http: ^1.3.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
