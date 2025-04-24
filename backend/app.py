@@ -4,8 +4,17 @@ import joblib
 import pandas as pd
 from utils.advice_generator import get_advice
 
+# Import Firebase Admin SDK
+import firebase_admin
+from firebase_admin import credentials
+import os
+
+# Initialize Firebase Admin SDK
+cred = credentials.Certificate(os.getenv("FIREBASE_CREDENTIALS_PATH"))  # Replace with the actual path to your service account key
+firebase_admin.initialize_app(cred)
+
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all routes and origins
 
 # Load models and label encoders
 models = {
