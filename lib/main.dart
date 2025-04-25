@@ -1,9 +1,18 @@
+// ignore_for_file: duplicate_import
+
+// Removed unused import
 import 'package:flutter/material.dart';
 import 'screens/crop_selection_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
+
+// ignore: unused_import
 
 @pragma('vm:entry-point')
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   try {
     await Firebase.initializeApp(
       options: FirebaseOptions(
@@ -20,6 +29,10 @@ void main() async {
     debugPrint('Firebase initialization failed: $e');
   }
 
+  // Start the sensor data simulation
+  final simulator = SensorDataSimulator();
+  simulator.startSimulation("tomato"); // Simulate data for "tomato"
+
   runApp(const SoilAdvisorApp());
 }
 
@@ -33,5 +46,16 @@ class SoilAdvisorApp extends StatelessWidget {
       theme: ThemeData.dark(),
       home: const CropSelectionScreen(),
     );
+  }
+}
+
+class SensorDataSimulator {
+  // Add your existing code here
+
+  void startSimulation(String cropType) {
+    // Simulate sensor data for the given crop type
+    if (kDebugMode) {
+      print('Simulating sensor data for $cropType...');
+    }
   }
 }

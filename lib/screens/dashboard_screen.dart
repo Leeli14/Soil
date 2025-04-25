@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String selectedCrop;
@@ -17,10 +18,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final apiServices = ApiServices(); // Assuming you have an ApiServices class
 
-  void getPredictionFromBackend(Map<String, dynamic> sensorData) async {
+  void getPredictionFromBackend() async {
     setState(() => isLoading = true);
     try {
-      final result = await apiServices.getPrediction("tomato", sensorData);
+      // Fetch the latest sensor data from Firestore
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('sensor_data')
+              .doc('latest')
+              .get();
+
+      if (!doc.exists || doc.data() == null) {
+        throw Exception("No sensor data available");
+      }
+
+      final sensorData = doc.data()!['data'];
+      final crop = doc.data()!['crop'];
+
+      // Send the data to the backend for predictions
+      final result = await apiServices.getPrediction(crop, sensorData);
       setState(() => prediction = result);
     } catch (e) {
       ScaffoldMessenger.of(
@@ -43,11 +59,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: StreamBuilder<DocumentSnapshot>(
         stream: sensorDoc.snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+          if (!snapshot.hasData || snapshot.data == null) {
+            if (kDebugMode) {
+              print("No data found in Firestore.");
+            }
+            return const Center(child: Text("No sensor data available"));
+          }
 
-          final sensorData = snapshot.data!.data() as Map<String, dynamic>;
+          final sensorData = snapshot.data!.data() as Map<String, dynamic>?;
+
+          if (sensorData == null) {
+            if (kDebugMode) {
+              print("Sensor data is null.");
+            }
+            return const Center(child: Text("Sensor data is null"));
+          }
+
+          if (kDebugMode) {
+            print("Fetched sensor data: $sensorData");
+          }
+
+          final data = sensorData['data'] as Map<String, dynamic>?;
+
+          if (data == null) {
+            if (kDebugMode) {
+              print("Sensor data['data'] is null.");
+            }
+            return const Center(child: Text("No sensor readings available"));
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -59,21 +101,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                sensorInfoTile("Moisture", sensorData['moisture']),
-                sensorInfoTile("pH", sensorData['ph']),
-                sensorInfoTile("Temperature", sensorData['temperature']),
-                sensorInfoTile("EC", sensorData['ec']),
-                sensorInfoTile("Nitrogen", sensorData['nitrogen']),
-                sensorInfoTile("Phosphorus", sensorData['phosphorus']),
-                sensorInfoTile("Potassium", sensorData['potassium']),
+                sensorInfoTile("Moisture", data['moisture']),
+                sensorInfoTile("pH", data['ph']),
+                sensorInfoTile("Temperature", data['temperature']),
+                sensorInfoTile("EC", data['ec']),
+                sensorInfoTile("Nitrogen", data['nitrogen']),
+                sensorInfoTile("Phosphorus", data['phosphorus']),
+                sensorInfoTile("Potassium", data['potassium']),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.analytics),
                   label: const Text("Get Prediction & Advice"),
-                  onPressed:
-                      isLoading
-                          ? null
-                          : () => getPredictionFromBackend(sensorData),
+                  onPressed: isLoading ? null : getPredictionFromBackend,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade700,
                     padding: const EdgeInsets.symmetric(
