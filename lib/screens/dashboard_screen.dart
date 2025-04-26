@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class DashboardScreen extends StatefulWidget {
   final String selectedCrop;
@@ -21,19 +23,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void getPredictionFromBackend() async {
     setState(() => isLoading = true);
     try {
-      // Fetch the latest sensor data from Firestore
-      final doc =
+      // Query the most recent document
+      final querySnapshot =
           await FirebaseFirestore.instance
               .collection('sensor_data')
-              .doc('latest')
+              .orderBy('timestamp', descending: true)
+              .limit(1)
               .get();
 
-      if (!doc.exists || doc.data() == null) {
+      if (querySnapshot.docs.isEmpty) {
         throw Exception("No sensor data available");
       }
 
-      final sensorData = doc.data()!['data'];
-      final crop = doc.data()!['crop'];
+      final doc = querySnapshot.docs.first;
+      final sensorData = doc.data()['data'];
+      final crop = doc.data()['crop'];
 
       // Send the data to the backend for predictions
       final result = await apiServices.getPrediction(crop, sensorData);
@@ -183,17 +187,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 class ApiServices {
+  final String baseUrl =
+      "http://<your-backend-url>"; // Replace with your backend URL
+
   Future<Map<String, dynamic>> getPrediction(
     String crop,
     Map<String, dynamic> sensorData,
   ) async {
-    // Simulate a network call
-    await Future.delayed(const Duration(seconds: 2));
-    return {
-      'predicted_disease': 'Powdery Mildew',
-      'solution': 'Apply fungicide',
-      'irrigation': 'Water every 3 days',
-      'fertilization': 'Use NPK fertilizer',
-    };
+    final url = Uri.parse("$baseUrl/predict");
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"crop": crop, "features": sensorData}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception("Failed to fetch prediction: ${response.body}");
+      }
+    } catch (e) {
+      throw Exception("Error: $e");
+    }
   }
 }
