@@ -45,19 +45,19 @@ class SensorDataSimulator {
 
     // Generate random values within the specified ranges
     final sensorData = {
-      "Moisture": _randomInRange(ranges["moisture"][0], ranges["moisture"][1]),
-      "Temperature": _randomInRange(
+      "moisture": _randomInRange(ranges["moisture"][0], ranges["moisture"][1]),
+      "temperature": _randomInRange(
         ranges["temperature"][0],
         ranges["temperature"][1],
       ),
-      "pH": _randomInRange(ranges["ph"][0], ranges["ph"][1]),
+      "ph": _randomInRange(ranges["ph"][0], ranges["ph"][1]),
       "ec": _randomInRange(ranges["ec"][0], ranges["ec"][1]),
-      "Nitrogen": _randomInRange(ranges["nitrogen"][0], ranges["nitrogen"][1]),
-      "Phosphorus": _randomInRange(
+      "nitrogen": _randomInRange(ranges["nitrogen"][0], ranges["nitrogen"][1]),
+      "phosphorus": _randomInRange(
         ranges["phosphorus"][0],
         ranges["phosphorus"][1],
       ),
-      "Potassium": _randomInRange(
+      "potassium": _randomInRange(
         ranges["potassium"][0],
         ranges["potassium"][1],
       ),
@@ -89,9 +89,12 @@ class SensorDataSimulator {
   Future<void> sendToFirestore(String crop) async {
     final sensorData = generateSensorData(crop);
     try {
-      await _firestore.collection('sensor_data').doc('latest').set({
+      // Use a unique ID based on the current timestamp
+      final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      await _firestore.collection('sensor_data').doc(timestamp).set({
         "crop": crop,
         "data": sensorData,
+        "timestamp": FieldValue.serverTimestamp(),
       });
       if (kDebugMode) {
         print("Sensor data for $crop sent to Firestore: $sensorData");
