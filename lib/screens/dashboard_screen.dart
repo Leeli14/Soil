@@ -19,6 +19,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool isLoading = false;
 
   final apiServices = ApiServices(); // Assuming you have an ApiServices class
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   void getPredictionFromBackend() async {
     setState(() => isLoading = true);
@@ -41,6 +42,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       // Send the data to the backend for predictions
       final result = await apiServices.getPrediction(crop, sensorData);
+
+      // Update Firestore with the latest prediction
+      await _firestore.collection('sensor_data').doc('latest').set({
+        "crop": crop,
+        "data": sensorData,
+        "timestamp": FieldValue.serverTimestamp(),
+      });
+
       setState(() => prediction = result);
     } catch (e) {
       ScaffoldMessenger.of(
@@ -188,7 +197,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
 class ApiServices {
   final String baseUrl =
-      "http://<your-backend-url>"; // Replace with your backend URL
+      "https://zany-doodle-g46wvxjq59w9cv655-5000.app.github.dev";
 
   Future<Map<String, dynamic>> getPrediction(
     String crop,

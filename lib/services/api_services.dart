@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiServices {
   final String baseUrl =
-      "https://zany-doodle-g46wvxjq59w9cv655-5000.app.github.dev/"; // Replace with your backend URL
+      "https://zany-doodle-g46wvxjq59w9cv655-5000.app.github.dev"; // Replace with your backend URL
 
   Future<Map<String, dynamic>> getPrediction(
     String crop,

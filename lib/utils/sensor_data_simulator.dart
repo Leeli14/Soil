@@ -96,6 +96,12 @@ class SensorDataSimulator {
         "data": sensorData,
         "timestamp": FieldValue.serverTimestamp(),
       });
+      // Always update the 'latest' document for dashboard
+      await _firestore.collection('sensor_data').doc('latest').set({
+        "crop": crop,
+        "data": sensorData,
+        "timestamp": FieldValue.serverTimestamp(),
+      });
       if (kDebugMode) {
         print("Sensor data for $crop sent to Firestore: $sensorData");
       }
