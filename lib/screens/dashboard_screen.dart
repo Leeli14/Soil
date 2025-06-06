@@ -18,37 +18,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic>? prediction;
   bool isLoading = false;
 
-  final apiServices = ApiServices(); // Assuming you have an ApiServices class
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final apiServices = ApiServices();
 
   void getPredictionFromBackend() async {
     setState(() => isLoading = true);
     try {
-      // Query the most recent document
-      final querySnapshot =
-          await FirebaseFirestore.instance
-              .collection('sensor_data')
-              .orderBy('timestamp', descending: true)
-              .limit(1)
-              .get();
+      // Query the most recent document (no timestamp, so just get the latest added)
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('sensor_data')
+          .orderBy('timestamp', descending: true)
+          .limit(1)
+          .get();
 
       if (querySnapshot.docs.isEmpty) {
         throw Exception("No sensor data available");
       }
 
       final doc = querySnapshot.docs.first;
-      final sensorData = doc.data()['data'];
-      final crop = doc.data()['crop'];
+      final sensorData = doc.data(); // Use all fields directly
 
       // Send the data to the backend for predictions
-      final result = await apiServices.getPrediction(crop, sensorData);
-
-      // Update Firestore with the latest prediction
-      await _firestore.collection('sensor_data').doc('latest').set({
-        "crop": crop,
-        "data": sensorData,
-        "timestamp": FieldValue.serverTimestamp(),
-      });
+      final result = await apiServices.getPrediction(widget.selectedCrop, sensorData);
 
       setState(() => prediction = result);
     } catch (e) {
@@ -61,28 +51,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sensorDoc = FirebaseFirestore.instance
-        .collection('sensor_data')
-        .doc('latest');
-
     return Scaffold(
       appBar: AppBar(
         title: Text("Dashboard - ${widget.selectedCrop.toUpperCase()}"),
       ),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: sensorDoc.snapshots(),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('sensor_data')
+            .orderBy(FieldPath.documentId, descending: true)
+            .limit(1)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data == null) {
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             if (kDebugMode) {
               print("No data found in Firestore.");
             }
             return const Center(child: Text("No sensor data available"));
           }
 
-          final sensorData = snapshot.data!.data() as Map<String, dynamic>?;
+          final sensorData = snapshot.data!.docs.first.data() as Map<String, dynamic>?;
 
           if (sensorData == null) {
             if (kDebugMode) {
@@ -95,15 +85,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             print("Fetched sensor data: $sensorData");
           }
 
-          final data = sensorData['data'] as Map<String, dynamic>?;
-
-          if (data == null) {
-            if (kDebugMode) {
-              print("Sensor data['data'] is null.");
-            }
-            return const Center(child: Text("No sensor readings available"));
-          }
-
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -114,13 +95,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                sensorInfoTile("Moisture", data['moisture']),
-                sensorInfoTile("pH", data['ph']),
-                sensorInfoTile("Temperature", data['temperature']),
-                sensorInfoTile("EC", data['ec']),
-                sensorInfoTile("Nitrogen", data['nitrogen']),
-                sensorInfoTile("Phosphorus", data['phosphorus']),
-                sensorInfoTile("Potassium", data['potassium']),
+                sensorInfoTile("EC", sensorData['ec']),
+                sensorInfoTile("Moisture", sensorData['moisture']),
+                sensorInfoTile("Nitrogen", sensorData['nitrogen']),
+                sensorInfoTile("pH", sensorData['ph']),
+                sensorInfoTile("Phosphorus", sensorData['phosphorus']),
+                sensorInfoTile("Potassium", sensorData['potassium']),
+                sensorInfoTile("Temperature", sensorData['temperature']),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.analytics),
@@ -151,7 +132,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       leading: const Icon(Icons.science),
       title: Text(title),
       trailing: Text(
-        value.toString(),
+        value != null ? value.toString() : 'N/A',
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
     );
