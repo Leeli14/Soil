@@ -23,7 +23,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void getPredictionFromBackend() async {
     setState(() => isLoading = true);
     try {
-      // Query the most recent document (no timestamp, so just get the latest added)
       final querySnapshot = await FirebaseFirestore.instance
           .collection('sensor_data')
           .orderBy('timestamp', descending: true)
@@ -35,10 +34,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
 
       final doc = querySnapshot.docs.first;
-      final sensorData = doc.data(); // Use all fields directly
+      final rawSensorData = doc.data();
 
-      // Send the data to the backend for predictions
-      final result = await apiServices.getPrediction(widget.selectedCrop, sensorData);
+      // Define required keys with default values
+      final defaultValues = {
+        "moisture": 0.0,
+        "temperature": 0.0,
+        "ph": 7.0,
+        "ec": 0.0,
+        "nitrogen": 0.0,
+        "phosphorus": 0.0,
+        "potassium": 0.0,
+      };
+
+      // Merge defaults with fetched data
+      final cleanedSensorData = {
+        for (var key in defaultValues.keys)
+          key: rawSensorData.containsKey(key)
+              ? rawSensorData[key] ?? defaultValues[key]
+              : defaultValues[key],
+      };
+
+      // Optional debug log
+      if (kDebugMode) {
+        print("Cleaned sensor data sent to backend: $cleanedSensorData");
+      }
+
+      final result = await apiServices.getPrediction(widget.selectedCrop, cleanedSensorData);
 
       setState(() => prediction = result);
     } catch (e) {
@@ -58,8 +80,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('sensor_data')
-            .orderBy(FieldPath.documentId, descending: true)
+            .orderBy('timestamp', descending: true)
             .limit(1)
+
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
