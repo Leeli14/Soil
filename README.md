@@ -15,6 +15,35 @@ A new Flutter project.  Its called Farm.  It is a project that takes in soil sen
 
 ## Getting Started
 
+1.Run app.py to start the backend.  please set the environment viarable to the correct one. this is to locate the firebase document. use copilot for this case.
+
+2.Run the esp32 code to read the sensor data
+
+3.Then run firebase deploy.  to deploy the flutter front end. 
+
+4.Access the app through the url given at the 3rd step.
+
+5. incase of failure to access esp32 reading from sensor. Test the back end prediction using postman online. and input random manual values to get results and predictions. 
+
+Thats how it works. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 This project is a starting point for a Flutter application.
 
 A few resources to get you started if this is your first Flutter project:
