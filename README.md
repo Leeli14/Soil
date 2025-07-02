@@ -1,3 +1,7 @@
+DUSHIME LINUS 2020/DEE/EVE/0225
+AINEMBABAZI RUTH 	2023/DEE/EVE/1388
+MUMBERE GABRIEL	 2021/DEE/DAY/0924/G
+
 # farm
 
 A new Flutter project.  Its called Farm.  It is a project that takes in soil sensor data and displays it to through a web app while also giving fertilization and irrigation advice, it also predicts the occurence of soil borne diseases based on the given data from the soil sensor.
